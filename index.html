@@ -360,21 +360,28 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 20px;
+            gap: 15px;
             margin: 30px 0;
         }
 
         .option-btn {
-            min-width: 200px;
-            font-size: 20px;
-            padding: 20px 30px;
+            min-width: 180px;
+            font-size: 18px;
+            padding: 18px 25px;
             border-radius: 15px;
             border: 3px solid transparent;
             transition: all 0.3s ease;
+            flex: 1;
+            max-width: 220px;
         }
 
         .option-btn.overrated {
             background: linear-gradient(45deg, #ff6b6b, #ff8787);
+            color: white;
+        }
+
+        .option-btn.fairlyRated {
+            background: linear-gradient(45deg, #28a745, #34ce57);
             color: white;
         }
 
@@ -423,15 +430,17 @@
             display: flex;
             justify-content: space-around;
             flex-wrap: wrap;
-            gap: 20px;
+            gap: 15px;
             margin: 20px 0;
         }
 
         .vote-stat {
             background: white;
             border-radius: 10px;
-            padding: 20px;
-            min-width: 150px;
+            padding: 15px;
+            min-width: 120px;
+            flex: 1;
+            max-width: 180px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             transition: transform 0.3s ease;
         }
@@ -444,6 +453,10 @@
             border-top: 5px solid #ff6b6b;
         }
 
+        .vote-stat.fairlyRated {
+            border-top: 5px solid #28a745;
+        }
+
         .vote-stat.underrated {
             border-top: 5px solid #4ecdc4;
         }
@@ -454,22 +467,22 @@
         }
 
         .vote-count {
-            font-size: 36px;
+            font-size: 32px;
             font-weight: bold;
             color: #333;
         }
 
         .vote-label {
-            font-size: 18px;
+            font-size: 16px;
             color: #666;
-            margin-top: 10px;
+            margin-top: 8px;
             font-weight: bold;
         }
 
         .vote-percentage {
-            font-size: 14px;
+            font-size: 12px;
             color: #999;
-            margin-top: 5px;
+            margin-top: 4px;
         }
 
         .result-message {
@@ -704,6 +717,7 @@
             .option-btn {
                 width: 100%;
                 max-width: 300px;
+                min-width: 200px;
             }
 
             .timer {
@@ -716,6 +730,7 @@
 
             .vote-stat {
                 width: 100%;
+                max-width: none;
             }
 
             .game-image {
@@ -800,7 +815,7 @@
 
         <!-- Discussion Phase -->
         <div id="discussionInfo" class="discussion-info hidden">
-            💬 Discuss with other players whether this is overrated or underrated!
+            💬 Discuss with other players whether this is overrated, fairly rated, or underrated!
         </div>
 
         <!-- Voting Interface -->
@@ -809,6 +824,9 @@
             <div class="option-buttons">
                 <button class="btn option-btn overrated" onclick="castVote('overrated')" id="overratedBtn">
                     📈 Overrated
+                </button>
+                <button class="btn option-btn fairlyRated" onclick="castVote('fairlyRated')" id="fairlyRatedBtn">
+                    ⚖️ Fairly Rated
                 </button>
                 <button class="btn option-btn underrated" onclick="castVote('underrated')" id="underratedBtn">
                     📉 Underrated
@@ -867,7 +885,7 @@
                 <ul>
                     <li><strong>30 Rounds:</strong> The game consists of 30 quick rounds</li>
                     <li><strong>Image Reveal:</strong> Each round shows an image (movie, character, food, etc.)</li>
-                    <li><strong>Discussion (60s):</strong> Players discuss whether it's overrated or underrated</li>
+                    <li><strong>Discussion (60s):</strong> Players discuss whether it's overrated, fairly rated, or underrated</li>
                     <li><strong>Voting (30s):</strong> Everyone votes for their opinion</li>
                     <li><strong>Results:</strong> See the majority opinion and earn points</li>
                 </ul>
@@ -876,8 +894,15 @@
                 <ul>
                     <li><strong>Majority Wins:</strong> If you vote with the majority, you get +1 point</li>
                     <li><strong>Minority Gets Nothing:</strong> If you're in the minority, you get 0 points</li>
-                    <li><strong>50/50 Split:</strong> If votes are tied, nobody gets points that round</li>
+                    <li><strong>Three-Way Tie:</strong> If all options are tied for the most votes, nobody gets points</li>
                     <li><strong>Final Winner:</strong> Player with the most points after 30 rounds wins!</li>
+                </ul>
+
+                <h3>⚖️ Voting Options</h3>
+                <ul>
+                    <li><strong>📈 Overrated:</strong> This thing gets more praise/attention than it deserves</li>
+                    <li><strong>⚖️ Fairly Rated:</strong> This thing gets the right amount of praise/attention</li>
+                    <li><strong>📉 Underrated:</strong> This thing deserves more praise/attention than it gets</li>
                 </ul>
 
                 <h3>💡 Tips</h3>
@@ -1317,7 +1342,7 @@
             document.getElementById('discussionInfo').classList.remove('hidden');
             
             document.getElementById('phaseTitle').textContent = `Round ${data.roundNumber} - Discussion Time`;
-            document.getElementById('timerDescription').textContent = 'Discuss whether this is overrated or underrated!';
+            document.getElementById('timerDescription').textContent = 'Discuss whether this is overrated, fairly rated, or underrated!';
         }
 
         function showVotingPhase() {
@@ -1378,33 +1403,42 @@
         }
 
         function showYourVote(vote) {
+            // Reset all buttons
+            document.getElementById('overratedBtn').classList.remove('selected');
+            document.getElementById('fairlyRatedBtn').classList.remove('selected');
+            document.getElementById('underratedBtn').classList.remove('selected');
+            
             // Add selected class to the voted button
             if (vote === 'overrated') {
                 document.getElementById('overratedBtn').classList.add('selected');
-                document.getElementById('underratedBtn').classList.remove('selected');
-            } else {
+            } else if (vote === 'fairlyRated') {
+                document.getElementById('fairlyRatedBtn').classList.add('selected');
+            } else if (vote === 'underrated') {
                 document.getElementById('underratedBtn').classList.add('selected');
-                document.getElementById('overratedBtn').classList.remove('selected');
             }
         }
 
         function enableVoteButtons() {
             document.getElementById('overratedBtn').disabled = false;
+            document.getElementById('fairlyRatedBtn').disabled = false;
             document.getElementById('underratedBtn').disabled = false;
             document.getElementById('overratedBtn').classList.remove('selected');
+            document.getElementById('fairlyRatedBtn').classList.remove('selected');
             document.getElementById('underratedBtn').classList.remove('selected');
         }
 
         function disableVoteButtons() {
             document.getElementById('overratedBtn').disabled = true;
+            document.getElementById('fairlyRatedBtn').disabled = true;
             document.getElementById('underratedBtn').disabled = true;
         }
 
         // Display functions
         function displayRoundResults(data) {
             const breakdown = document.getElementById('voteBreakdown');
-            const totalVotes = data.votes.overrated + data.votes.underrated;
+            const totalVotes = data.votes.overrated + data.votes.fairlyRated + data.votes.underrated;
             const overratedPercentage = totalVotes > 0 ? Math.round((data.votes.overrated / totalVotes) * 100) : 0;
+            const fairlyRatedPercentage = totalVotes > 0 ? Math.round((data.votes.fairlyRated / totalVotes) * 100) : 0;
             const underratedPercentage = totalVotes > 0 ? Math.round((data.votes.underrated / totalVotes) * 100) : 0;
             
             breakdown.innerHTML = `
@@ -1412,6 +1446,11 @@
                     <div class="vote-label">📈 Overrated</div>
                     <div class="vote-count">${data.votes.overrated}</div>
                     <div class="vote-percentage">${overratedPercentage}%</div>
+                </div>
+                <div class="vote-stat fairlyRated ${data.majorityOption === 'fairlyRated' ? 'majority' : ''}">
+                    <div class="vote-label">⚖️ Fairly Rated</div>
+                    <div class="vote-count">${data.votes.fairlyRated}</div>
+                    <div class="vote-percentage">${fairlyRatedPercentage}%</div>
                 </div>
                 <div class="vote-stat underrated ${data.majorityOption === 'underrated' ? 'majority' : ''}">
                     <div class="vote-label">📉 Underrated</div>
@@ -1422,9 +1461,24 @@
             
             const resultMessage = document.getElementById('resultMessage');
             if (data.majorityOption) {
-                const emoji = data.majorityOption === 'overrated' ? '📈' : '📉';
+                let emoji = '';
+                let optionName = '';
+                switch(data.majorityOption) {
+                    case 'overrated':
+                        emoji = '📈';
+                        optionName = 'Overrated';
+                        break;
+                    case 'fairlyRated':
+                        emoji = '⚖️';
+                        optionName = 'Fairly Rated';
+                        break;
+                    case 'underrated':
+                        emoji = '📉';
+                        optionName = 'Underrated';
+                        break;
+                }
                 resultMessage.className = 'result-message win';
-                resultMessage.innerHTML = `🏆 <strong>${emoji} ${data.majorityOption.charAt(0).toUpperCase() + data.majorityOption.slice(1)}</strong> wins! Majority voters get +1 point`;
+                resultMessage.innerHTML = `🏆 <strong>${emoji} ${optionName}</strong> wins! Majority voters get +1 point`;
             } else {
                 resultMessage.className = 'result-message tie';
                 resultMessage.innerHTML = `🤝 It's a tie! No points awarded this round`;
