@@ -229,7 +229,7 @@ io.on('connection', (socket) => {
                 usedImages: [],
                 timer: 60,
                 timerInterval: null,
-                voteResults: { overrated: 0, underrated: 0 }
+                voteResults: { overrated: 0, fairlyRated: 0, underrated: 0 }
             };
             
             // Initialize scores
@@ -285,7 +285,7 @@ io.on('connection', (socket) => {
             gameState.votes = {};
             gameState.usedImages = [];
             gameState.timer = 60;
-            gameState.voteResults = { overrated: 0, underrated: 0 };
+            gameState.voteResults = { overrated: 0, fairlyRated: 0, underrated: 0 };
             
             lobby.participants.forEach(participant => {
                 gameState.scores[participant.username] = 0;
@@ -423,13 +423,15 @@ function calculateResults(code) {
     if (!gameState || !lobby) return;
     
     // Count votes (only from connected players)
-    const voteResults = { overrated: 0, underrated: 0 };
+    const voteResults = { overrated: 0, fairlyRated: 0, underrated: 0 };
     
     lobby.participants.forEach(participant => {
         if (participant.connected) {
             const vote = gameState.votes[participant.username];
             if (vote === 'overrated') {
                 voteResults.overrated++;
+            } else if (vote === 'fairlyRated') {
+                voteResults.fairlyRated++;
             } else if (vote === 'underrated') {
                 voteResults.underrated++;
             }
@@ -438,18 +440,21 @@ function calculateResults(code) {
     
     gameState.voteResults = { ...voteResults };
     
-    // Determine majority and award points
-    const totalVotes = voteResults.overrated + voteResults.underrated;
+    // Determine majority option (highest vote count)
     let majorityOption = null;
+    let maxVotes = 0;
     
-    if (voteResults.overrated > voteResults.underrated) {
-        majorityOption = 'overrated';
-    } else if (voteResults.underrated > voteResults.overrated) {
-        majorityOption = 'underrated';
-    }
-    // If equal, no one gets points
+    Object.entries(voteResults).forEach(([option, votes]) => {
+        if (votes > maxVotes) {
+            maxVotes = votes;
+            majorityOption = option;
+        } else if (votes === maxVotes && votes > 0) {
+            // If there's a tie for the most votes, no majority
+            majorityOption = null;
+        }
+    });
     
-    // Award points to majority voters
+    // Award points to majority voters (as long as there's a clear winner, no >50% requirement)
     if (majorityOption) {
         lobby.participants.forEach(participant => {
             if (gameState.votes[participant.username] === majorityOption) {
